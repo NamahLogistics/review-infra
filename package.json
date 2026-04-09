@@ -20,7 +20,7 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "prisma": "^5.22.0",
-    "ts-node": "10.9.2",
-    "tsx": "^4.21.0"
+    "ts-node": "10.9.2"
+  
   }
 }
