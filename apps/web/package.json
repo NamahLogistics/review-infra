@@ -8,13 +8,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
-    "check-types": "next typegen && tsc --noEmit"
+    "check-types": "next typegen && tsc --noEmit",
+    "vercel-build": "cd ../.. && npx prisma generate --schema=packages/db/prisma/schema.prisma && next build"
   },
   "dependencies": {
     "@repo/ui": "workspace:*",
+    "@review-infra/widget": "workspace:^",
     "next": "16.2.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -24,5 +26,6 @@
     "@types/react-dom": "19.2.2",
     "eslint": "^9.39.1",
     "typescript": "5.9.2"
-  }
+  },
+  "packageManager": "pnpm@10.6.0"
 }

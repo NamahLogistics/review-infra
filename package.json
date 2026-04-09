@@ -13,8 +13,14 @@
     "turbo": "^2.9.5",
     "typescript": "5.9.2"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.6.0",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0",
+    "ts-node": "10.9.2",
+    "tsx": "^4.21.0"
   }
 }

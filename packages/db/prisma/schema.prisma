@@ -1,0 +1,67 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../../../apps/api/src/generated/client"
+  // Add this line below
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:postgres@localhost:5432/postgres"
+}
+
+model Store {
+  id            String         @id @default(cuid())
+  name          String
+  apiKey        String         @unique
+  plan          String         @default("free")
+  shopDomain    String?        @unique
+  accessToken   String?
+  createdAt     DateTime       @default(now())
+  products      Product[]
+  reviews       Review[]
+  billingEvents BillingEvent[]
+}
+
+model Product {
+  id         String    @id @default(cuid())
+  name       String
+  externalId String?   @unique
+  storeId    String
+  store      Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  reviews    Review[]
+  createdAt  DateTime  @default(now())
+}
+
+model Review {
+  id          String    @id @default(cuid())
+  storeId     String
+  productId   String
+  authorName  String?
+  authorEmail String?
+  rating      Int
+  title       String?
+  text        String
+  status      String    @default("approved")
+  verified    Boolean   @default(false)
+  source      String    @default("manual")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, status, createdAt])
+  @@index([storeId, status, createdAt])
+}
+
+model BillingEvent {
+  id        String    @id @default(cuid())
+  storeId   String
+  provider  String
+  eventType String
+  rawBody   String
+  createdAt DateTime  @default(now())
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
+}
