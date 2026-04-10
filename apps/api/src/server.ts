@@ -48,7 +48,7 @@ app.use('/import', importCsvRouter);
 app.use('/moderation', moderationRouter);
 app.use('/analytics', analyticsRouter);
 app.use('/products', productsRouter);
-app.use('/embed', widgetRouter);
+app.use('/embed', express.static('../../packages/widget/embed'));
 app.use('/auth', userAuthRouter);
 app.use('/stores', storesRouter);
 app.use('/reviews', reviewsRouter);
