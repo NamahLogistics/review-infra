@@ -2,31 +2,26 @@
 
 import { useEffect, useState } from 'react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
+
 export default function ModerationPage() {
   const [storeId, setStoreId] = useState('');
   const [reviews, setReviews] = useState<any[]>([]);
 
   useEffect(() => {
     async function load() {
-      let resolvedStoreId = localStorage.getItem('review_infra_store_id') || '';
-
-      if (!resolvedStoreId) {
-        const testRes = await fetch('https://review-infra-api-production.up.railway.app/test-db');
-        const testData = await testRes.json();
-        if (Array.isArray(testData.stores) && testData.stores[0]?.id) {
-          resolvedStoreId = testData.stores[0].id;
-          localStorage.setItem('review_infra_store_id', resolvedStoreId);
-          if (testData.stores[0]?.apiKey) {
-            localStorage.setItem('review_infra_api_key', testData.stores[0].apiKey);
-          }
-        }
-      }
+      const resolvedStoreId = localStorage.getItem('review_infra_store_id') || '';
+      const apiKey = localStorage.getItem('review_infra_api_key') || '';
 
       setStoreId(resolvedStoreId);
 
-      if (!resolvedStoreId) return;
+      if (!resolvedStoreId || !apiKey) return;
 
-      const res = await fetch(`https://review-infra-api-production.up.railway.app/moderation/store/${resolvedStoreId}/reviews`);
+      const res = await fetch(`${API_BASE}/moderation/store/${resolvedStoreId}/reviews`, {
+        headers: {
+          'x-api-key': apiKey,
+        },
+      });
       const data = await res.json();
       setReviews(Array.isArray(data) ? data : []);
     }
@@ -35,9 +30,14 @@ export default function ModerationPage() {
   }, []);
 
   async function updateStatus(id: string, status: string) {
-    const res = await fetch(`https://review-infra-api-production.up.railway.app/moderation/reviews/${id}/status`, {
+    const apiKey = localStorage.getItem('review_infra_api_key') || '';
+
+    const res = await fetch(`${API_BASE}/moderation/reviews/${id}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
       body: JSON.stringify({ status }),
     });
 

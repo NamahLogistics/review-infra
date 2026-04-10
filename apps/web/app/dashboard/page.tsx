@@ -2,71 +2,106 @@
 
 import { useEffect, useState } from 'react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
+
 export default function Dashboard() {
   const [email, setEmail] = useState('');
-  const [token, setToken] = useState('');
+  const [password, setPassword] = useState('');
   const [shop, setShop] = useState('');
+  const [token, setToken] = useState('');
+  const [user, setUser] = useState<any>(null);
   const [store, setStore] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
+  const [storeName, setStoreName] = useState('');
 
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const storeId = url.searchParams.get('storeId');
-    const savedStoreId = localStorage.getItem('review_infra_store_id');
+    const savedToken = localStorage.getItem('review_infra_user_token') || '';
+    const savedStoreId = localStorage.getItem('review_infra_store_id') || '';
+    const savedApiKey = localStorage.getItem('review_infra_api_key') || '';
 
-    const finalStoreId = storeId || savedStoreId;
-    if (!finalStoreId) return;
+    if (!savedToken) return;
 
-    fetch(`https://review-infra-api-production.up.railway.app/store/${finalStoreId}`)
+    setToken(savedToken);
+
+    fetch(`${API_BASE}/auth/me`, {
+      headers: {
+        authorization: `Bearer ${savedToken}`,
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
-        setStore(data);
-        localStorage.setItem('review_infra_store_id', data.id);
-        localStorage.setItem('review_infra_api_key', data.apiKey);
+        if (data?.id) setUser(data);
       });
+
+    if (savedStoreId && savedApiKey) {
+      fetch(`${API_BASE}/store/${savedStoreId}`, {
+        headers: {
+          'x-api-key': savedApiKey,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.id) setStore(data);
+        });
+    }
   }, []);
 
-  async function login() {
-    const res = await fetch('https://review-infra-api-production.up.railway.app/auth/login', {
+  async function register() {
+    const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
-    setToken(data.token);
+
+    if (data?.token) {
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('review_infra_user_token', data.token);
+    }
+  }
+
+  async function login() {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (data?.token) {
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('review_infra_user_token', data.token);
+    }
+  }
+
+  async function createStore() {
+    const res = await fetch(`${API_BASE}/stores`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name: storeName }),
+    });
+
+    const data = await res.json();
+
+    if (data?.id) {
+      setStore(data);
+      localStorage.setItem('review_infra_store_id', data.id);
+      localStorage.setItem('review_infra_api_key', data.apiKey);
+    }
   }
 
   function connectShopify() {
-    window.location.href = `https://review-infra-api-production.up.railway.app/shopify/auth/start?shop=${shop}`;
-  }
-
-  async function createLocalStore() {
-    const res = await fetch('https://review-infra-api-production.up.railway.app/create-store', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'My Store' }),
-    });
-
-    const data = await res.json();
-    setStore(data);
-    localStorage.setItem('review_infra_store_id', data.id);
-    localStorage.setItem('review_infra_api_key', data.apiKey);
+    window.location.href = `${API_BASE}/shopify/auth/start?shop=${shop}`;
   }
 
   async function upgrade() {
-    const res = await fetch('https://review-infra-api-production.up.railway.app/billing/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ storeId: store.id }),
-    });
-
-    const data = await res.json();
-    window.open(data.checkoutUrl, '_blank');
-  }
-
-  async function syncProducts() {
-    const res = await fetch('https://review-infra-api-production.up.railway.app/shopify/sync-products', {
+    const res = await fetch(`${API_BASE}/billing/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ storeId: store.id }),
@@ -74,33 +109,54 @@ export default function Dashboard() {
 
     const data = await res.json();
 
-    if (data.success) {
-      const productsRes = await fetch(`https://review-infra-api-production.up.railway.app/store/${store.id}/products`);
-      const productsData = await productsRes.json();
-      setProducts(Array.isArray(productsData) ? productsData : []);
+    if (data.checkoutUrl) {
+      window.open(data.checkoutUrl, '_blank');
+      return;
     }
+
+    alert(data.error || 'Checkout not configured yet');
   }
 
   return (
     <main style={{ padding: 40, fontFamily: 'sans-serif' }}>
       <h1>Dashboard</h1>
 
-      {!token && !store && (
-        <div style={{ display: 'grid', gap: 12, maxWidth: 320 }}>
+      {!token && (
+        <div style={{ display: 'grid', gap: 12, maxWidth: 360 }}>
           <input
             placeholder="Enter email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={{ padding: 10, border: '1px solid #ddd', borderRadius: 8 }}
           />
+          <input
+            placeholder="Enter password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ padding: 10, border: '1px solid #ddd', borderRadius: 8 }}
+          />
+          <button onClick={register} style={{ padding: 10, borderRadius: 8 }}>
+            Register
+          </button>
           <button onClick={login} style={{ padding: 10, borderRadius: 8 }}>
             Login
           </button>
         </div>
       )}
 
-      {token && !store && (
+      {token && user && !store && (
         <div style={{ display: 'grid', gap: 12, maxWidth: 420, marginTop: 20 }}>
+          <div>Signed in as {user.email}</div>
+          <input
+            placeholder="Store name"
+            value={storeName}
+            onChange={(e) => setStoreName(e.target.value)}
+            style={{ padding: 10, border: '1px solid #ddd', borderRadius: 8 }}
+          />
+          <button onClick={createStore} style={{ padding: 10, borderRadius: 8 }}>
+            Create Store
+          </button>
           <input
             placeholder="your-store.myshopify.com"
             value={shop}
@@ -109,9 +165,6 @@ export default function Dashboard() {
           />
           <button onClick={connectShopify} style={{ padding: 10, borderRadius: 8 }}>
             Connect Shopify
-          </button>
-          <button onClick={createLocalStore} style={{ padding: 10, borderRadius: 8 }}>
-            Create Local Store
           </button>
         </div>
       )}
@@ -134,11 +187,11 @@ export default function Dashboard() {
           <a href="/imports" style={{ marginTop: 8 }}>Go to Imports</a>
 
           <pre style={{ background: '#f5f5f5', padding: 16, borderRadius: 12, overflow: 'auto' }}>
-{`<script src="https://review-infra-api-production.up.railway.app/widget.js"></script>
+{`<script src="${API_BASE}/embed/widget.js"></script>
 
 <div
   data-review-product="YOUR_PRODUCT_ID"
-  data-review-api="https://review-infra-api-production.up.railway.app"
+  data-review-api="${API_BASE}"
   data-api-key="${store.apiKey}">
 </div>`}
           </pre>

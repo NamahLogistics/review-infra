@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
+
 export default function ImportsPage() {
   const [storeId, setStoreId] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -16,8 +18,12 @@ export default function ImportsPage() {
     setStoreId(savedStoreId);
     setApiKey(savedApiKey);
 
-    if (savedStoreId) {
-      fetch(`https://review-infra-api-production.up.railway.app/store/${savedStoreId}/products`)
+    if (savedStoreId && savedApiKey) {
+      fetch(`${API_BASE}/store/${savedStoreId}/products`, {
+        headers: {
+          'x-api-key': savedApiKey,
+        },
+      })
         .then((res) => res.json())
         .then((data) => {
           setProducts(Array.isArray(data) ? data : []);
@@ -29,11 +35,13 @@ export default function ImportsPage() {
   }, []);
 
   async function seedImport() {
-    const res = await fetch('https://review-infra-api-production.up.railway.app/import/csv', {
+    const res = await fetch(`${API_BASE}/import/csv`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
       body: JSON.stringify({
-        storeId,
         rows: [
           {
             productName: 'Midnight Oud',
@@ -56,7 +64,11 @@ export default function ImportsPage() {
     const data = await res.json();
     setResult(data);
 
-    const productsRes = await fetch(`https://review-infra-api-production.up.railway.app/store/${storeId}/products`);
+    const productsRes = await fetch(`${API_BASE}/store/${storeId}/products`, {
+      headers: {
+        'x-api-key': apiKey,
+      },
+    });
     const productsData = await productsRes.json();
     setProducts(Array.isArray(productsData) ? productsData : []);
     if (Array.isArray(productsData) && productsData[0]?.id) {
@@ -65,7 +77,7 @@ export default function ImportsPage() {
   }
 
   async function checkReviews() {
-    const res = await fetch(`https://review-infra-api-production.up.railway.app/reviews/${productId}`, {
+    const res = await fetch(`${API_BASE}/reviews/${productId}`, {
       headers: {
         'x-api-key': apiKey,
       },

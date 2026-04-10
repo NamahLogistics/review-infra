@@ -1,14 +1,33 @@
 import express from 'express';
 import { db } from './db';
+import { z } from 'zod';
+import { requireStore } from './middleware/auth';
 
 export const importCsvRouter = express.Router();
 
-importCsvRouter.post('/csv', async (req, res) => {
-  const { storeId, rows } = req.body;
+const schema = z.object({
+  rows: z.array(
+    z.object({
+      productName: z.string(),
+      rating: z.number().min(1).max(5),
+      text: z.string(),
+      title: z.string().optional(),
+      authorName: z.string().optional(),
+      authorEmail: z.string().optional(),
+      externalId: z.string().optional(),
+    })
+  ),
+});
 
-  if (!storeId || !Array.isArray(rows)) {
-    return res.status(400).json({ error: 'storeId and rows are required' });
+importCsvRouter.post('/csv', requireStore, async (req: any, res) => {
+  const parsed = schema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error });
   }
+
+  const { rows } = parsed.data;
+  const storeId = req.store.id;
 
   const created: any[] = [];
 
@@ -36,9 +55,9 @@ importCsvRouter.post('/csv', async (req, res) => {
         productId: product.id,
         authorName: row.authorName || 'Anonymous',
         authorEmail: row.authorEmail || null,
-        rating: Number(row.rating || 5),
+        rating: row.rating,
         title: row.title || null,
-        text: row.text || '',
+        text: row.text,
         status: 'approved',
         verified: false,
         source: 'csv',

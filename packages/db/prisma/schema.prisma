@@ -1,40 +1,59 @@
 generator client {
   provider      = "prisma-client-js"
   output        = "../../../apps/api/src/generated/client"
-  // Add this line below
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:postgres@localhost:5432/postgres"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  stores    Store[]
 }
 
 model Store {
   id            String         @id @default(cuid())
+  userId        String?
   name          String
   apiKey        String         @unique
   plan          String         @default("free")
   shopDomain    String?        @unique
   accessToken   String?
   createdAt     DateTime       @default(now())
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   products      Product[]
   reviews       Review[]
   billingEvents BillingEvent[]
+  nudges        ReviewNudge[]
+  orders        ReviewOrder[]
+  events        ReviewEvent[]
+
+  @@index([userId, createdAt])
 }
 
 model Product {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   name       String
-  externalId String?   @unique
+  externalId String?
   storeId    String
-  store      Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   reviews    Review[]
-  createdAt  DateTime  @default(now())
+  nudges     ReviewNudge[]
+  orders     ReviewOrder[]
+  events     ReviewEvent[]
+  createdAt  DateTime @default(now())
+
+  @@unique([storeId, externalId])
 }
 
 model Review {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   storeId     String
   productId   String
   authorName  String?
@@ -42,26 +61,88 @@ model Review {
   rating      Int
   title       String?
   text        String
-  status      String    @default("approved")
-  verified    Boolean   @default(false)
-  source      String    @default("manual")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  status      String   @default("approved")
+  verified    Boolean  @default(false)
+  source      String   @default("manual")
+  ipHash      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId, status, createdAt])
   @@index([storeId, status, createdAt])
+  @@index([storeId, authorEmail, createdAt])
 }
 
 model BillingEvent {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   storeId   String
   provider  String
   eventType String
   rawBody   String
-  createdAt DateTime  @default(now())
-  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId, createdAt])
+}
+
+model ReviewNudge {
+  id              String      @id @default(cuid())
+  storeId         String
+  productId       String
+  customerName    String?
+  customerEmail   String
+  orderRef        String?
+  status          String      @default("pending")
+  sendAfter       DateTime?
+  sentAt          DateTime?
+  completedAt     DateTime?
+  resendCount     Int         @default(0)
+  lastResendAt    DateTime?
+  openedAt        DateTime?
+  clickedAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  store           Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, status, createdAt])
+  @@index([storeId, status, sendAfter])
+  @@index([customerEmail, createdAt])
+}
+
+model ReviewOrder {
+  id              String   @id @default(cuid())
+  storeId         String
+  productId       String
+  externalOrderId String?
+  customerName    String?
+  customerEmail   String
+  orderRef        String?
+  nudgedAt        DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, createdAt])
+  @@index([storeId, customerEmail, createdAt])
+  @@unique([storeId, externalOrderId, productId])
+}
+
+model ReviewEvent {
+  id         String   @id @default(cuid())
+  storeId     String
+  productId   String?
+  reviewId    String?
+  nudgeId     String?
+  type        String
+  payload     String
+  createdAt   DateTime @default(now())
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([storeId, createdAt])
+  @@index([type, createdAt])
 }

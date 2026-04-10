@@ -1,11 +1,12 @@
 {
   "name": "@review-infra/widget",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts"
+  "private": true,
+  "main": "./src/index.tsx",
+  "module": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "exports": {
+    ".": "./src/index.tsx"
   },
   "dependencies": {
     "react": "^19.1.1",

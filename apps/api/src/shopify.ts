@@ -30,10 +30,9 @@ async function syncProducts(shop: string, accessToken: string, storeId: string) 
 
   for (const product of products) {
     await db.product.upsert({
-      where: { externalId: product.id },
+      where: { storeId_externalId: { storeId, externalId: product.id } },
       update: {
         name: product.title,
-        storeId,
       },
       create: {
         name: product.title,
@@ -104,7 +103,7 @@ shopifyRouter.get('/auth/callback', async (req, res) => {
     await syncProducts(shop, accessToken, store.id);
   }
 
-  res.redirect(`http://localhost:3000/dashboard?storeId=${store.id}`);
+  res.redirect(`${process.env.APP_BASE_URL}/dashboard?storeId=${store.id}`);
 });
 
 shopifyRouter.post('/sync-products', async (req, res) => {

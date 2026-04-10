@@ -1,24 +1,24 @@
 import express from 'express';
 import { db } from './db';
+import { requireStore } from './middleware/auth';
 
 export const productsRouter = express.Router();
 
-// create or get product by externalId (Shopify product id)
-productsRouter.post('/upsert', async (req, res) => {
-  const { storeId, externalId, name } = req.body;
+productsRouter.post('/upsert', requireStore, async (req: any, res) => {
+  const { externalId, name } = req.body;
 
-  if (!storeId || !externalId) {
-    return res.status(400).json({ error: 'storeId and externalId required' });
+  if (!externalId) {
+    return res.status(400).json({ error: 'externalId required' });
   }
 
   let product = await db.product.findFirst({
-    where: { externalId, storeId },
+    where: { externalId, storeId: req.store.id },
   });
 
   if (!product) {
     product = await db.product.create({
       data: {
-        storeId,
+        storeId: req.store.id,
         externalId,
         name: name || 'Product',
       },

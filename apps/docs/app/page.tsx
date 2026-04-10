@@ -1,102 +1,126 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
-
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
-
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
+export default function DocsHomePage() {
+  const apiBase = 'https://your-api-domain.com';
+  const apiKey = 'YOUR_API_KEY';
+  const bearer = 'YOUR_BEARER_TOKEN';
 
   return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
-
-export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/docs/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.dev/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+    <main style={{ minHeight: '100vh', background: '#fafafa', padding: 24, fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', display: 'grid', gap: 16 }}>
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: -1 }}>Review Infra Docs</div>
+          <div style={{ marginTop: 10, opacity: 0.68 }}>Headless reviews, nudges, moderation, and widgets for developers.</div>
         </div>
-        <Button appName="docs" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.dev?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.dev →
-        </a>
-      </footer>
-    </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>1. Install SDK</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`pnpm add @review-infra/sdk`}
+          </pre>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>2. Load reviews</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`import { ReviewInfraClient } from '@review-infra/sdk';
+
+const client = new ReviewInfraClient({
+  apiBaseUrl: '${apiBase}',
+  apiKey: '${apiKey}',
+});
+
+const data = await client.getReviews({
+  productId: 'prod_1',
+  page: 1,
+  limit: 5,
+  sort: 'newest',
+});`}
+          </pre>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>3. Submit reviews</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`const result = await client.submitReview({
+  apiKey: '${apiKey}',
+  productId: 'prod_1',
+  rating: 5,
+  title: 'Amazing',
+  text: 'Loved it',
+  authorName: 'Shubham',
+  authorEmail: 'dev@example.com',
+});`}
+          </pre>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>4. Auth + stores</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`const auth = new ReviewInfraClient({ apiBaseUrl: '${apiBase}' });
+
+const { token } = await auth.login('dev@example.com', 'password123');
+
+auth.setBearerToken(token);
+
+const store = await auth.createStore('My Store');
+const stores = await auth.listStores();`}
+          </pre>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>5. Create and send nudges</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`const app = new ReviewInfraClient({
+  apiBaseUrl: '${apiBase}',
+  bearerToken: '${bearer}',
+});
+
+const nudge = await app.createNudge({
+  storeId: 'store_id',
+  productId: 'product_id',
+  customerName: 'Customer',
+  customerEmail: 'customer@example.com',
+  orderRef: 'order_1',
+});
+
+const nudges = await app.listNudges('store_id');
+await app.sendNudge(nudge.id);`}
+          </pre>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>6. Script widget</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`<script src="${apiBase}/embed/widget.js"></script>
+
+<div
+  data-review-product="prod_1"
+  data-review-api="${apiBase}"
+  data-api-key="${apiKey}"
+  data-review-sort="newest"
+  data-review-limit="5">
+</div>`}
+          </pre>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>7. Core endpoints</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`POST   /auth/register
+POST   /auth/login
+GET    /auth/me
+GET    /stores
+POST   /stores
+GET    /reviews/:productId
+GET    /reviews/admin/list/:productId
+POST   /public-reviews/submit
+GET    /review-nudges
+POST   /review-nudges
+POST   /review-nudges/send
+POST   /auto-nudges/ingest-order
+POST   /cron/run-auto-nudges`}
+          </pre>
+        </div>
+      </div>
+    </main>
   );
 }

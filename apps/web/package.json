@@ -16,7 +16,8 @@
     "@review-infra/widget": "workspace:^",
     "next": "16.2.0",
     "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react-dom": "19.1.1",
+    "@review-infra/sdk": "workspace:*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

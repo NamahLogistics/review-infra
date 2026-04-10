@@ -1,10 +1,11 @@
 import express from 'express';
 import { db } from './db';
+import { requireStore } from './middleware/auth';
 
 export const analyticsRouter = express.Router();
 
-analyticsRouter.get('/store/:storeId', async (req, res) => {
-  const storeId = req.params.storeId;
+analyticsRouter.get('/store/:storeId', requireStore, async (req: any, res) => {
+  const storeId = req.store.id;
 
   const reviews = await db.review.findMany({
     where: { storeId },
@@ -12,12 +13,14 @@ analyticsRouter.get('/store/:storeId', async (req, res) => {
   });
 
   const totalReviews = reviews.length;
+
   const averageRating =
     totalReviews > 0
       ? Number(
           (
-            reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / totalReviews
-          ).toFixed(1),
+            reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
+            totalReviews
+          ).toFixed(1)
         )
       : 0;
 

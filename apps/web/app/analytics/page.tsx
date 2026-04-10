@@ -2,28 +2,26 @@
 
 import { useEffect, useState } from 'react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL!;
+
 export default function AnalyticsPage() {
   const [storeId, setStoreId] = useState('');
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
     async function load() {
-      let resolvedStoreId = localStorage.getItem('review_infra_store_id') || '';
-
-      if (!resolvedStoreId) {
-        const testRes = await fetch('https://review-infra-api-production.up.railway.app/test-db');
-        const testData = await testRes.json();
-        if (Array.isArray(testData.stores) && testData.stores[0]?.id) {
-          resolvedStoreId = testData.stores[0].id;
-          localStorage.setItem('review_infra_store_id', resolvedStoreId);
-        }
-      }
+      const resolvedStoreId = localStorage.getItem('review_infra_store_id') || '';
+      const apiKey = localStorage.getItem('review_infra_api_key') || '';
 
       setStoreId(resolvedStoreId);
 
-      if (!resolvedStoreId) return;
+      if (!resolvedStoreId || !apiKey) return;
 
-      const res = await fetch(`https://review-infra-api-production.up.railway.app/analytics/store/${resolvedStoreId}`);
+      const res = await fetch(`${API_BASE}/analytics/store/${resolvedStoreId}`, {
+        headers: {
+          'x-api-key': apiKey,
+        },
+      });
       const json = await res.json();
       setData(json);
     }

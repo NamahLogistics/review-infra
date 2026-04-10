@@ -6,24 +6,32 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx src/server.ts",
     "start": "prisma generate --schema=prisma/schema.prisma && tsx src/server.ts",
-    "build": "echo build-skipped",
-    "postinstall": "prisma generate --schema=prisma/schema.prisma"
+    "build": "tsc --noEmit",
+    "postinstall": "prisma generate --schema=prisma/schema.prisma",
+    "check-types": "tsc --noEmit",
+    "cron:auto-nudges": "node scripts/run-auto-nudges.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^8.0.5",
     "tsx": "^4.21.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.19.17",
+    "@types/nodemailer": "^8.0.0",
     "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2"
