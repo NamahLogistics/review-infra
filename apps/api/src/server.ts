@@ -2,6 +2,7 @@ import rateLimit from "express-rate-limit";
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { db } from './db';
 import { shopifyRouter } from './shopify';
 import { paddleRouter } from './paddle';
