@@ -68,9 +68,9 @@ export default function Page() {
                 fontWeight: 800,
               }}
             >
-              Add reviews to your app
+              Add reviews to your product page
               <br />
-              in 5 minutes.
+              in 1 minute.
             </h1>
 
             <p
@@ -82,9 +82,9 @@ export default function Page() {
                 maxWidth: 760,
               }}
             >
-              Review Infra gives developers a review API, widget, submit flow,
-              nudges, moderation, analytics, and SDK — without being locked into
-              a bulky merchant plugin.
+              Review Infra gives developers a drop-in review widget, submit flow,
+              nudges, moderation, analytics, and Shopify-ready automation —
+              without forcing them into a bulky merchant plugin.
             </p>
 
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
@@ -142,9 +142,9 @@ export default function Page() {
               }}
             >
               {[
-                ['API-first', 'Built for custom storefronts, Hydrogen, and apps'],
-                ['SDK included', 'Typed client for reviews, nudges, auth, and stores'],
-                ['Headless by default', 'Use our UI or bring your own frontend'],
+                ['1 script install', 'Paste one script on your product page and reviews render automatically'],
+                ['Shopify-ready', 'Use dynamic product ids like {{ product.id }} and let Review Infra handle the backend'],
+                ['Headless by default', 'Works with custom storefronts, Hydrogen, Next.js, and embedded scripts'],
               ].map(([title, text]) => (
                 <div
                   key={title}
@@ -202,20 +202,22 @@ export default function Page() {
                 color: '#d6d6ff',
                 overflowX: 'auto',
               }}
-            >{`import { TopRating } from '@review-infra/widget'
+            >{`<script
+  src="${API_BASE}/embed/widget.js"
+  data-api-key="YOUR_API_KEY"
+  data-product-id="{{ product.id }}">
+</script>
 
-<TopRating
-  productId="prod_1"
-  apiBaseUrl="${API_BASE}"
-  apiKey="YOUR_API_KEY"
-/>
-
-// submit
-await client.submitReview({
-  apiKey: 'YOUR_API_KEY',
-  productId: 'prod_1',
-  rating: 5,
-  text: 'Loved it'
+// optional submit
+await fetch("${API_BASE}/public-reviews/submit", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    apiKey: "YOUR_API_KEY",
+    productId: "{{ product.id }}",
+    rating: 5,
+    text: "Loved it"
+  })
 })`}</pre>
           </div>
         </div>

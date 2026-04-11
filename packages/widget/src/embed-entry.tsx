@@ -1,13 +1,8 @@
-import { createRoot } from "react-dom/client";
 import React from "react";
+import { createRoot } from "react-dom/client";
 import { TopRating } from "./index";
 
-(window as any).renderReviewInfra = function ({
-  mountId,
-  productId,
-  apiKey,
-  apiBaseUrl,
-}: any) {
+function renderReviewInfra({ mountId, productId, apiKey, apiBaseUrl }: any) {
   const el = document.getElementById(mountId);
   if (!el) return;
 
@@ -19,4 +14,7 @@ import { TopRating } from "./index";
       apiBaseUrl={apiBaseUrl}
     />
   );
-};
+}
+
+(window as any).ReviewInfra = (window as any).ReviewInfra || {};
+(window as any).ReviewInfra.renderReviewInfra = renderReviewInfra;

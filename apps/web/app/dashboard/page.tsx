@@ -170,7 +170,7 @@ export default function Dashboard() {
       )}
 
       {store && (
-        <div style={{ marginTop: 24, display: 'grid', gap: 8 }}>
+        <div style={{ marginTop: 24, display: 'grid', gap: 12 }}>
           <h3>Store Connected</h3>
           <p><b>Name:</b> {store.name}</p>
           <p><b>Shop:</b> {store.shopDomain || '-'}</p>
@@ -186,15 +186,22 @@ export default function Dashboard() {
 
           <a href="/imports" style={{ marginTop: 8 }}>Go to Imports</a>
 
-          <pre style={{ background: '#f5f5f5', padding: 16, borderRadius: 12, overflow: 'auto' }}>
-{`<script src="${API_BASE}/embed/widget.js"></script>
+          <div style={{ marginTop: 20 }}>
+            <h4>1-minute script install</h4>
+            <pre style={{ background: '#f5f5f5', padding: 16, borderRadius: 12, overflow: 'auto' }}>
+{`<script
+  src="${API_BASE}/embed/widget.js"
+  data-api-key="${store.apiKey}"
+  data-product-id="YOUR_DYNAMIC_PRODUCT_ID">
+</script>`}
+            </pre>
 
-<div
-  data-review-product="YOUR_PRODUCT_ID"
-  data-review-api="${API_BASE}"
-  data-api-key="${store.apiKey}">
-</div>`}
-          </pre>
+            <div style={{ display: 'grid', gap: 6, marginTop: 12 }}>
+              <div><b>Shopify:</b> <code>{`{{ product.id }}`}</code></div>
+              <div><b>React / Hydrogen:</b> <code>{`product.id`}</code></div>
+              <div><b>Generic app:</b> <code>{`currentProduct.id`}</code></div>
+            </div>
+          </div>
         </div>
       )}
     </main>

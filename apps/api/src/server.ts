@@ -21,10 +21,13 @@ import { reviewNudgesRouter } from './review-nudges';
 import { autoNudgesRouter } from './auto-nudges';
 import { shopifyWebhooksRouter } from './shopify-webhooks';
 import { cronRouter } from './cron';
+import fs from 'fs';
 
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1); 
+
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -49,7 +52,14 @@ app.use('/import', importCsvRouter);
 app.use('/moderation', moderationRouter);
 app.use('/analytics', analyticsRouter);
 app.use('/products', productsRouter);
-app.use('/embed', express.static('../../packages/widget/embed'));
+const widgetPath = path.resolve(process.cwd(), 'public', 'embed');
+const widgetFile = path.join(widgetPath, 'widget.js');
+
+console.log('Widget path:', widgetPath);
+console.log('Widget exists:', fs.existsSync(widgetFile), widgetFile);
+
+app.use('/embed', express.static(widgetPath));
+
 app.use('/auth', userAuthRouter);
 app.use('/stores', storesRouter);
 app.use('/reviews', reviewsRouter);

@@ -1,45 +1,27 @@
 (function () {
   try {
-    const script = document.currentScript;
+    const currentScript = document.currentScript;
 
-    const apiKey = script?.getAttribute('data-api-key');
-    let productId = script?.getAttribute('data-product-id');
-    const apiBaseUrl =
-      script?.getAttribute('data-review-api') ||
-      'https://review-infra-api-production.up.railway.app';
+    const apiKey = currentScript.getAttribute('data-api-key');
+    const productId = currentScript.getAttribute('data-product-id');
 
-    // Shopify auto-detect
-    if (!productId && window.ShopifyAnalytics?.meta?.product?.id) {
-      productId = String(window.ShopifyAnalytics.meta.product.id);
-    }
-
-    if (!apiKey || !productId) {
-      console.warn('[ReviewInfra] Missing apiKey or productId');
-      return;
-    }
+    const apiBaseUrl = currentScript.src.split('/embed/')[0];
 
     const mount = document.createElement('div');
     mount.id = 'reviewinfra-root';
-    mount.style.marginTop = '40px';
-
-    const target =
-      document.querySelector('main') ||
-      document.querySelector('#MainContent') ||
-      document.body;
-
-    target.appendChild(mount);
+    currentScript.parentNode.insertBefore(mount, currentScript);
 
     const appScript = document.createElement('script');
     appScript.src = apiBaseUrl + '/embed/widget-bundle.js';
     appScript.async = true;
 
     appScript.onload = function () {
-      if (!window.renderReviewInfra) {
+      if (!window.ReviewInfra || !window.ReviewInfra.renderReviewInfra) {
         console.error('[ReviewInfra] render function missing');
         return;
       }
 
-      window.renderReviewInfra({
+      window.ReviewInfra.renderReviewInfra({
         mountId: 'reviewinfra-root',
         productId,
         apiKey,

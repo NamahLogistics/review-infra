@@ -1,5 +1,5 @@
 export default function DocsHomePage() {
-  const apiBase = 'https://your-api-domain.com';
+  const apiBase = 'https://review-infra-api-production.up.railway.app';
   const apiKey = 'YOUR_API_KEY';
   const bearer = 'YOUR_BEARER_TOKEN';
 
@@ -8,18 +8,54 @@ export default function DocsHomePage() {
       <div style={{ maxWidth: 960, margin: '0 auto', display: 'grid', gap: 16 }}>
         <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
           <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: -1 }}>Review Infra Docs</div>
-          <div style={{ marginTop: 10, opacity: 0.68 }}>Headless reviews, nudges, moderation, and widgets for developers.</div>
+          <div style={{ marginTop: 10, opacity: 0.68 }}>
+            Add reviews to your product page in 1 minute. Use the script widget, then layer on submit flows, SDK usage, nudges, and automation.
+          </div>
         </div>
 
         <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>1. Install SDK</div>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>1. Script widget</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`<script
+  src="${apiBase}/embed/widget.js"
+  data-api-key="${apiKey}"
+  data-product-id="{{ product.id }}">
+</script>`}
+          </pre>
+
+          <div style={{ marginTop: 12, opacity: 0.75 }}>
+            Product id examples: Shopify <code>{`{{ product.id }}`}</code>, React/Hydrogen <code>{`product.id`}</code>, generic <code>{`currentProduct.id`}</code>
+          </div>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>2. Submit reviews</div>
+          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
+{`await fetch('${apiBase}/public-reviews/submit', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    apiKey: '${apiKey}',
+    productId: '{{ product.id }}',
+    rating: 5,
+    title: 'Amazing',
+    text: 'Loved it',
+    authorName: 'Shubham',
+    authorEmail: 'dev@example.com',
+  }),
+});`}
+          </pre>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>3. Install SDK</div>
           <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
 {`pnpm add @review-infra/sdk`}
           </pre>
         </div>
 
         <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>2. Load reviews</div>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>4. Load reviews with SDK</div>
           <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
 {`import { ReviewInfraClient } from '@review-infra/sdk';
 
@@ -38,22 +74,7 @@ const data = await client.getReviews({
         </div>
 
         <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>3. Submit reviews</div>
-          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
-{`const result = await client.submitReview({
-  apiKey: '${apiKey}',
-  productId: 'prod_1',
-  rating: 5,
-  title: 'Amazing',
-  text: 'Loved it',
-  authorName: 'Shubham',
-  authorEmail: 'dev@example.com',
-});`}
-          </pre>
-        </div>
-
-        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>4. Auth + stores</div>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>5. Auth + stores</div>
           <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
 {`const auth = new ReviewInfraClient({ apiBaseUrl: '${apiBase}' });
 
@@ -67,7 +88,7 @@ const stores = await auth.listStores();`}
         </div>
 
         <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>5. Create and send nudges</div>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>6. Create and send nudges</div>
           <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
 {`const app = new ReviewInfraClient({
   apiBaseUrl: '${apiBase}',
@@ -84,21 +105,6 @@ const nudge = await app.createNudge({
 
 const nudges = await app.listNudges('store_id');
 await app.sendNudge(nudge.id);`}
-          </pre>
-        </div>
-
-        <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 24, padding: 24 }}>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>6. Script widget</div>
-          <pre style={{ background: '#111', color: '#fff', padding: 16, borderRadius: 16, overflow: 'auto', marginTop: 14 }}>
-{`<script src="${apiBase}/embed/widget.js"></script>
-
-<div
-  data-review-product="prod_1"
-  data-review-api="${apiBase}"
-  data-api-key="${apiKey}"
-  data-review-sort="newest"
-  data-review-limit="5">
-</div>`}
           </pre>
         </div>
 
