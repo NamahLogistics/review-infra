@@ -10,6 +10,26 @@ export default function DocsHomePage() {
         fontFamily: 'Inter, sans-serif',
       }}
     >
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+  <div style={{ fontSize: 32, fontWeight: 800 }}>
+    Review Infra Docs
+  </div>
+
+  <a
+    href="/dashboard"
+    style={{
+      padding: '10px 14px',
+      borderRadius: 10,
+      border: '1px solid #111827',
+      background: '#111827',
+      color: '#fff',
+      textDecoration: 'none',
+      fontWeight: 700,
+    }}
+  >
+    Get API Key →
+  </a>
+</div>
       <div
         style={{
           maxWidth: 1080,
