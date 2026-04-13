@@ -40,6 +40,8 @@ const limiter = rateLimit({
   max: 1000,
 });
 
+app.use('/shopify-webhooks', shopifyWebhooksRouter);
+
 app.use(express.json());
 app.use(limiter);
 
@@ -111,7 +113,6 @@ app.use('/public-reviews', publicReviewsRouter);
 app.use('/widget-config', widgetConfigRouter);
 app.use('/review-nudges', reviewNudgesRouter);
 app.use('/auto-nudges', autoNudgesRouter);
-app.use('/shopify-webhooks', shopifyWebhooksRouter);
 app.use('/cron', cronRouter);
 app.use('/review-settings', reviewSettingsRouter);
 app.use('/test-email', testEmailRouter);
