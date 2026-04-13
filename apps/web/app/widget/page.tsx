@@ -10,25 +10,15 @@ type Store = {
   name: string;
   apiKey: string;
   storeType?: 'shopify' | 'custom';
+  shopDomain?: string | null;
+  connectionStatus?: string;
 };
 
-type AnalyticsData = {
-  totalReviews: number;
-  averageRating: number;
-  approved: number;
-  pending: number;
-  rejected: number;
-  byRating: Array<{
-    rating: number;
-    count: number;
-  }>;
-};
-
-export default function AnalyticsPage() {
+export default function WidgetPage() {
   const [token, setToken] = useState('');
   const [stores, setStores] = useState<Store[]>([]);
   const [storeId, setStoreId] = useState('');
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -49,19 +39,17 @@ export default function AnalyticsPage() {
       setLoading(false);
       return;
     }
-
     loadStores(token);
   }, [token]);
 
   useEffect(() => {
-    if (!activeStore?.id || !activeStore.apiKey) {
-      setData(null);
+    if (!storeId) {
+      setConfig(null);
       return;
     }
-
-    localStorage.setItem('review_infra_store_id', activeStore.id);
-    loadAnalytics(activeStore.id, activeStore.apiKey);
-  }, [activeStore]);
+    localStorage.setItem('review_infra_store_id', storeId);
+    loadConfig(storeId);
+  }, [storeId]);
 
   async function safeJson(res: Response) {
     try {
@@ -82,21 +70,21 @@ export default function AnalyticsPage() {
         },
       });
 
-      const json = await safeJson(res);
+      const data = await safeJson(res);
 
-      if (!res.ok || !Array.isArray(json)) {
+      if (!res.ok || !Array.isArray(data)) {
         setError('Failed to load stores.');
         setStores([]);
         return;
       }
 
-      setStores(json);
+      setStores(data);
 
       const savedStoreId = localStorage.getItem('review_infra_store_id') || '';
       const nextStoreId =
-        savedStoreId && json.some((store: Store) => store.id === savedStoreId)
+        savedStoreId && data.some((store: Store) => store.id === savedStoreId)
           ? savedStoreId
-          : json[0]?.id || '';
+          : data[0]?.id || '';
 
       setStoreId(nextStoreId);
     } finally {
@@ -104,30 +92,32 @@ export default function AnalyticsPage() {
     }
   }
 
-  async function loadAnalytics(resolvedStoreId: string, apiKey: string) {
+  async function loadConfig(s: string) {
     setLoading(true);
     setError('');
 
     try {
-      const res = await fetch(`${API_BASE}/analytics/store/${resolvedStoreId}`, {
-        headers: {
-          'x-api-key': apiKey,
-        },
-      });
+      const res = await fetch(`${API_BASE}/widget-config/${s}`);
+      const data = await safeJson(res);
 
-      const json = await safeJson(res);
-
-      if (!res.ok || !json) {
-        setError(json?.error || 'Failed to load analytics.');
-        setData(null);
+      if (!res.ok || !data) {
+        setError(data?.error || 'Failed to load widget config.');
+        setConfig(null);
         return;
       }
 
-      setData(json);
+      setConfig(data);
     } finally {
       setLoading(false);
     }
   }
+
+  const installSnippet = useMemo(() => {
+    if (!config || config.disabled) return '';
+    return `<script
+  src="${API_BASE}/embed/widget.js?storeId=${storeId}">
+</script>`;
+  }, [config, storeId]);
 
   return (
     <main style={{ padding: 24, fontFamily: 'Inter, sans-serif', background: '#f8fafc', minHeight: '100vh' }}>
@@ -148,11 +138,11 @@ export default function AnalyticsPage() {
         >
           <div>
             <div style={{ fontSize: 13, opacity: 0.6, textTransform: 'uppercase', letterSpacing: 1.2 }}>
-              Analytics
+              Widget
             </div>
-            <h1 style={{ margin: '8px 0 0', fontSize: 34 }}>Review analytics</h1>
+            <h1 style={{ margin: '8px 0 0', fontSize: 'clamp(26px, 6vw, 34px)' }}>Widget debug</h1>
             <div style={{ marginTop: 8, opacity: 0.72 }}>
-              Review summary for the selected store.
+              Check install readiness and copy the correct snippet.
             </div>
           </div>
 
@@ -160,11 +150,11 @@ export default function AnalyticsPage() {
             <Link href="/dashboard" style={linkButtonStyle()}>
               Dashboard
             </Link>
-            <Link href="/moderation" style={linkButtonStyle()}>
-              Moderation
+            <Link href="/products" style={linkButtonStyle()}>
+              Products
             </Link>
-            <Link href="/events" style={linkButtonStyle()}>
-              Events
+            <Link href="/reviews-demo" style={linkButtonStyle()}>
+              Widget demo
             </Link>
           </div>
         </div>
@@ -181,6 +171,7 @@ export default function AnalyticsPage() {
           <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 700 }}>
             Store
           </label>
+
           <select
             value={storeId}
             onChange={(e) => setStoreId(e.target.value)}
@@ -220,7 +211,7 @@ export default function AnalyticsPage() {
           </div>
         ) : null}
 
-        {loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
           <div
             style={{
               background: '#fff',
@@ -228,90 +219,91 @@ export default function AnalyticsPage() {
               borderRadius: 20,
               padding: 20,
               boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+              minWidth: 0,
             }}
           >
-            Loading...
-          </div>
-        )}
+            <h2 style={{ marginTop: 0 }}>Store summary</h2>
 
-        {!loading && data && (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(120px, 1fr))', gap: 12 }}>
-              <MetricCard title="Total" value={data.totalReviews} />
-              <MetricCard title="Average" value={data.averageRating} />
-              <MetricCard title="Approved" value={data.approved} />
-              <MetricCard title="Pending" value={data.pending} />
-              <MetricCard title="Rejected" value={data.rejected} />
-            </div>
-
-            <div
-              style={{
-                background: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: 20,
-                padding: 20,
-                boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
-                maxWidth: 760,
-              }}
-            >
-              <h2 style={{ marginTop: 0 }}>Rating breakdown</h2>
-
+            {loading ? (
+              <div>Loading...</div>
+            ) : (
               <div style={{ display: 'grid', gap: 10 }}>
-                {data.byRating.map((row) => (
-                  <div
-                    key={row.rating}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '80px 1fr 60px',
-                      gap: 12,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>{row.rating} star</div>
-
-                    <div
-                      style={{
-                        background: '#e5e7eb',
-                        borderRadius: 999,
-                        height: 10,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${data.totalReviews ? (row.count / data.totalReviews) * 100 : 0}%`,
-                          background: '#111827',
-                          height: '100%',
-                        }}
-                      />
-                    </div>
-
-                    <div>{row.count}</div>
-                  </div>
-                ))}
+                <div><b>Name:</b> {activeStore?.name || '-'}</div>
+                <div><b>Type:</b> {activeStore?.storeType || '-'}</div>
+                <div><b>Connection status:</b> {config?.connectionStatus || activeStore?.connectionStatus || '-'}</div>
+                <div><b>Shop domain:</b> {config?.shopDomain || activeStore?.shopDomain || '-'}</div>
+                <div><b>API key:</b> {config?.apiKey || activeStore?.apiKey || '-'}</div>
+                <div><b>Widget enabled:</b> {config?.disabled ? 'No' : 'Yes'}</div>
               </div>
-            </div>
-          </>
-        )}
+            )}
+          </div>
+
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #e5e7eb',
+              borderRadius: 20,
+              padding: 20,
+              boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+              minWidth: 0,
+            }}
+          >
+            <h2 style={{ marginTop: 0 }}>Install snippet</h2>
+
+            {config && !config.disabled ? (
+              <pre
+                style={{
+                  background: '#0f172a',
+                  color: '#e2e8f0',
+                  padding: 16,
+                  borderRadius: 16,
+                  overflowX: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                  maxWidth: '100%',
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                }}
+              >
+{installSnippet}
+              </pre>
+            ) : (
+              <div style={{ opacity: 0.7 }}>
+                Widget config is disabled for this store right now.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: 20,
+            padding: 20,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          }}
+        >
+          <h2 style={{ marginTop: 0 }}>Raw config</h2>
+          <pre
+            style={{
+              background: '#111827',
+              color: '#d1fae5',
+              padding: 16,
+              borderRadius: 16,
+              overflowX: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              maxWidth: '100%',
+              fontSize: 13,
+              lineHeight: 1.6,
+            }}
+          >
+{JSON.stringify(config, null, 2)}
+          </pre>
+        </div>
       </div>
     </main>
-  );
-}
-
-function MetricCard({ title, value }: { title: string; value: string | number }) {
-  return (
-    <div
-      style={{
-        background: '#fff',
-        border: '1px solid #e5e7eb',
-        borderRadius: 16,
-        padding: 16,
-        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
-      }}
-    >
-      <div style={{ fontSize: 13, opacity: 0.65 }}>{title}</div>
-      <div style={{ marginTop: 8, fontSize: 28, fontWeight: 800 }}>{value}</div>
-    </div>
   );
 }
 

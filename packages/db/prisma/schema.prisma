@@ -18,57 +18,70 @@ model User {
 }
 
 model Store {
-  id            String         @id @default(cuid())
-  userId        String?
-  name          String
-  apiKey        String         @unique
-  plan          String         @default("free")
-  shopDomain    String?        @unique
-  accessToken   String?
-  createdAt     DateTime       @default(now())
-  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  products      Product[]
-  reviews       Review[]
-  billingEvents BillingEvent[]
-  nudges        ReviewNudge[]
-  orders        ReviewOrder[]
-  events        ReviewEvent[]
+  storeType String @default("shopify")
+  id                           String          @id @default(cuid())
+  name                         String
+  apiKey                       String          @unique
+  createdAt                    DateTime        @default(now())
+  accessToken                  String?
+  plan                         String          @default("free")
+  shopDomain                   String?         @unique
+  userId                       String?
+  connectionStatus             String          @default("draft")
+  shopifyConnectedAt           DateTime?
+  shopifyUninstalledAt         DateTime?
+  shopifyAccessTokenExpiresAt  DateTime?
+  shopifyRefreshToken          String?
+  shopifyRefreshTokenExpiresAt DateTime?
+  judgeMeToken                 String?
+  judgeMeConnectedAt           DateTime?
+  autoReviewEnabled            Boolean         @default(false)
+  maxReminders                 Int             @default(2)
+  sendAfterDays                Int             @default(3)
+  billingEvents                BillingEvent[]
+  products                     Product[]
+  reviews                      Review[]
+  events                       ReviewEvent[]
+  nudges                       ReviewNudge[]
+  orders                       ReviewOrder[]
+  user                         User?           @relation(fields: [userId], references: [id])
+  settings                     ReviewSettings?
 
   @@index([userId, createdAt])
 }
 
 model Product {
-  id         String   @id @default(cuid())
+  id         String        @id @default(cuid())
   name       String
-  externalId String?
   storeId    String
-  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime      @default(now())
+  externalId String?
+  store      Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
   reviews    Review[]
+  events     ReviewEvent[]
   nudges     ReviewNudge[]
   orders     ReviewOrder[]
-  events     ReviewEvent[]
-  createdAt  DateTime @default(now())
 
   @@unique([storeId, externalId])
 }
 
 model Review {
   id          String   @id @default(cuid())
-  storeId     String
   productId   String
-  authorName  String?
-  authorEmail String?
   rating      Int
-  title       String?
   text        String
-  status      String   @default("approved")
-  verified    Boolean  @default(false)
-  source      String   @default("manual")
-  ipHash      String?
   createdAt   DateTime @default(now())
+  authorEmail String?
+  authorName  String?
+  source      String   @default("manual")
+  status      String   @default("approved")
+  storeId     String
+  title       String?
   updatedAt   DateTime @updatedAt
-  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  verified    Boolean  @default(false)
+  ipHash      String?
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([productId, status, createdAt])
   @@index([storeId, status, createdAt])
@@ -88,24 +101,24 @@ model BillingEvent {
 }
 
 model ReviewNudge {
-  id              String      @id @default(cuid())
-  storeId         String
-  productId       String
-  customerName    String?
-  customerEmail   String
-  orderRef        String?
-  status          String      @default("pending")
-  sendAfter       DateTime?
-  sentAt          DateTime?
-  completedAt     DateTime?
-  resendCount     Int         @default(0)
-  lastResendAt    DateTime?
-  openedAt        DateTime?
-  clickedAt       DateTime?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  store           Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id            String    @id @default(cuid())
+  storeId       String
+  productId     String
+  customerName  String?
+  customerEmail String
+  orderRef      String?
+  status        String    @default("pending")
+  sentAt        DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sendAfter     DateTime?
+  clickedAt     DateTime?
+  lastResendAt  DateTime?
+  openedAt      DateTime?
+  resendCount   Int       @default(0)
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store         Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId, status, createdAt])
   @@index([storeId, status, sendAfter])
@@ -113,7 +126,7 @@ model ReviewNudge {
 }
 
 model ReviewOrder {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   storeId         String
   productId       String
   externalOrderId String?
@@ -121,28 +134,53 @@ model ReviewOrder {
   customerEmail   String
   orderRef        String?
   nudgedAt        DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store           Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
+  @@unique([storeId, externalOrderId, productId])
   @@index([storeId, createdAt])
   @@index([storeId, customerEmail, createdAt])
-  @@unique([storeId, externalOrderId, productId])
 }
 
 model ReviewEvent {
-  id         String   @id @default(cuid())
-  storeId     String
-  productId   String?
-  reviewId    String?
-  nudgeId     String?
-  type        String
-  payload     String
-  createdAt   DateTime @default(now())
-  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  id        String   @id @default(cuid())
+  storeId   String
+  productId String?
+  reviewId  String?
+  nudgeId   String?
+  type      String
+  payload   String
+  createdAt DateTime @default(now())
+  product   Product? @relation(fields: [productId], references: [id])
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId, createdAt])
   @@index([type, createdAt])
+}
+
+model ReviewSettings {
+  id                String   @id @default(cuid())
+  storeId           String   @unique
+  isEnabled         Boolean  @default(true)
+  nudgingLevel      String   @default("medium")
+  sendDelayDays     Int      @default(3)
+  followUpDelayDays Int      @default(2)
+  maxReminders      Int      @default(1)
+  emailSubject      String
+  emailBody         String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id String @id @default(cuid())
+  storeId String
+  customerEmail String
+  customerName String?
+  productId String
+  createdAt DateTime @default(now())
 }

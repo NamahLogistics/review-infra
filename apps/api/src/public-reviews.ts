@@ -5,6 +5,42 @@ import { getClientIp, logEvent, sha256 } from './utils';
 
 export const publicReviewsRouter = express.Router();
 
+function normalizeModerationText(value?: string | null) {
+  return String(value || '').toLowerCase();
+}
+
+function containsAbuseForModeration(text?: string | null) {
+  const normalized = normalizeModerationText(text);
+  const badWords = [
+    'fuck',
+    'shit',
+    'bitch',
+    'asshole',
+    'bastard',
+    'fraud',
+    'scam',
+    'idiot',
+    'stupid',
+  ];
+  return badWords.some((word) => normalized.includes(word));
+}
+
+function isSpamForModeration(text?: string | null) {
+  const normalized = normalizeModerationText(text);
+  if (!normalized || normalized.trim().length < 5) return true;
+  if (normalized.includes('http://') || normalized.includes('https://') || normalized.includes('www.')) return true;
+  const repeatedChars = /(.)\1{7,}/.test(normalized);
+  return repeatedChars;
+}
+
+function getInitialModerationStatus(rating: number, text?: string | null) {
+  if (rating >= 4 && !containsAbuseForModeration(text) && !isSpamForModeration(text)) {
+    return 'approved';
+  }
+  return 'pending';
+}
+
+
 const submitSchema = z.object({
   apiKey: z.string().min(10),
   productId: z.string().min(1),
@@ -96,7 +132,7 @@ publicReviewsRouter.post('/submit', async (req, res) => {
       text,
       authorName: authorName || 'Anonymous',
       authorEmail: authorEmail || null,
-      status: 'pending',
+      status: getInitialModerationStatus(rating, text),
       verified: false,
       source: 'public_form',
       ipHash,

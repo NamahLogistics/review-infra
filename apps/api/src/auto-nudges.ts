@@ -1,8 +1,8 @@
 import express from 'express';
-import nodemailer from 'nodemailer';
 import { z } from 'zod';
 import { db } from './db';
 import { logEvent } from './utils';
+import { getMailer } from './mailer';
 
 export const autoNudgesRouter = express.Router();
 
@@ -20,23 +20,6 @@ const ingestSchema = z.object({
   ).min(1),
 });
 
-function getTransporter() {
-  const host = process.env.SMTP_HOST || '';
-  const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER || '';
-  const pass = process.env.SMTP_PASS || '';
-
-  if (!host || !user || !pass) {
-    throw new Error('SMTP is not configured');
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-}
 
 function getWorkerToken(req: express.Request) {
   return String(req.headers['x-worker-token'] || '');
@@ -59,8 +42,16 @@ autoNudgesRouter.post('/ingest-order', async (req, res) => {
     return res.status(401).json({ error: 'Invalid API key' });
   }
 
-  const delayHours = Number(process.env.AUTO_NUDGE_DELAY_HOURS || 24);
-  const sendAfter = new Date(Date.now() + delayHours * 60 * 60 * 1000);
+  const settings = await db.reviewSettings.findUnique({
+    where: { storeId: store.id },
+  });
+
+  if (!settings || !settings.isEnabled) {
+    return res.json({ success: true, skipped: 'automation disabled' });
+  }
+
+  const delayDays = settings.sendDelayDays || 3;
+  const sendAfter = new Date(Date.now() + delayDays * 24 * 60 * 60 * 1000);
 
   const createdOrders: any[] = [];
   const createdNudges: any[] = [];
@@ -173,7 +164,11 @@ autoNudgesRouter.post('/run', async (req, res) => {
       ],
     },
     include: {
-      store: true,
+      store: {
+        include: {
+          settings: true,
+        },
+      },
       product: true,
     },
     take: 50,
@@ -195,7 +190,11 @@ autoNudgesRouter.post('/run', async (req, res) => {
       completedAt: null,
     },
     include: {
-      store: true,
+      store: {
+        include: {
+          settings: true,
+        },
+      },
       product: true,
     },
     take: 50,
@@ -213,7 +212,7 @@ autoNudgesRouter.post('/run', async (req, res) => {
     });
   }
 
-  const transporter = getTransporter();
+  const mailer = getMailer();
 
   const sent: string[] = [];
   const failed: Array<{ id: string; error: string }> = [];
@@ -221,27 +220,31 @@ autoNudgesRouter.post('/run', async (req, res) => {
   for (const nudge of nudges) {
     try {
       const submitUrl =
-        `${process.env.APP_BASE_URL}/submit-review?` +
-        `apiKey=${encodeURIComponent(nudge.store.apiKey)}` +
-        `&productId=${encodeURIComponent(nudge.product.externalId || nudge.product.id)}` +
-        `&authorName=${encodeURIComponent(nudge.customerName || '')}` +
-        `&authorEmail=${encodeURIComponent(nudge.customerEmail)}`;
+        `${process.env.APP_BASE_URL}/submit-review?nudgeId=${encodeURIComponent(nudge.id)}`;
 
       const isResend = nudge.status === 'sent';
-
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to: nudge.customerEmail,
-        subject: isResend
+      const subject =
+        nudge.store.settings?.emailSubject ||
+        (isResend
           ? `Reminder: review ${nudge.product.name}`
-          : `How was your experience with ${nudge.product.name}?`,
+          : `How was your experience with ${nudge.product.name}?`);
+
+      const bodyTemplate =
+        nudge.store.settings?.emailBody ||
+        'Hi {{name}}, how was your experience with {{product}}?';
+
+      const body = bodyTemplate
+        .split('{{name}}').join( nudge.customerName || 'there')
+        .split('{{product}}').join( nudge.product.name)
+        .split('{{review_link}}').join( submitUrl);
+
+      await mailer.send({
+        to: nudge.customerEmail,
+        subject,
         html: `
           <div style="font-family:Arial,sans-serif;line-height:1.6">
-            <p>Hi ${nudge.customerName || 'there'},</p>
-            <p>${isResend ? 'Just a quick reminder' : 'How was your experience'} with <b>${nudge.product.name}</b>?</p>
-            <p>Please leave a quick review here:</p>
-            <p><a href="${submitUrl}">${submitUrl}</a></p>
-            <p>Thank you.</p>
+            <p>${body}</p>
+            <p><a href="${submitUrl}">Leave a review</a></p>
           </div>
         `,
       });

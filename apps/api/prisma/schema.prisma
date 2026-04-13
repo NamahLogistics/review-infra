@@ -9,12 +9,21 @@ datasource db {
 }
 
 model Store {
+  judgeMeToken String?
+  judgeMeConnectedAt DateTime?
+
   id            String         @id @default(cuid())
   name          String
   apiKey        String         @unique
   plan          String         @default("free")
   shopDomain    String?        @unique
   accessToken   String?
+  shopifyRefreshToken String?
+  shopifyAccessTokenExpiresAt DateTime?
+  shopifyRefreshTokenExpiresAt DateTime?
+  connectionStatus    String         @default("draft")
+  shopifyConnectedAt  DateTime?
+  shopifyUninstalledAt DateTime?
   createdAt     DateTime       @default(now())
   products      Product[]
   reviews       Review[]

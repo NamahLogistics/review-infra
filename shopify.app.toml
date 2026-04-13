@@ -1,0 +1,21 @@
+client_id = "fe1175f2ef15d42402a21456dbeeeea9"
+name = "Review Infra"
+application_url = "https://reviewinfra.dev"
+embedded = true
+
+[webhooks]
+api_version = "2026-04"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/app-uninstalled"
+
+[access_scopes]
+scopes = "read_products,write_script_tags"
+optional_scopes = []
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  "https://review-infra-api-production.up.railway.app/shopify/auth/callback"
+]

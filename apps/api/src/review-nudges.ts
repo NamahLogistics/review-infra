@@ -1,9 +1,9 @@
 import express from 'express';
-import nodemailer from 'nodemailer';
 import { z } from 'zod';
 import { db } from './db';
 import { requireUser } from './middleware/require-user';
 import { logEvent } from './utils';
+import { getMailer } from './mailer';
 import { ok, fail } from './http';
 
 export const reviewNudgesRouter = express.Router();
@@ -20,26 +20,6 @@ const sendSchema = z.object({
   nudgeId: z.string().min(1),
 });
 
-function getTransporter() {
-  const host = process.env.SMTP_HOST || '';
-  const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER || '';
-  const pass = process.env.SMTP_PASS || '';
-
-  if (!host || !user || !pass) {
-    throw new Error('SMTP is not configured');
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: {
-      user,
-      pass,
-    },
-  });
-}
 
 reviewNudgesRouter.get('/', requireUser, async (req: any, res) => {
   const storeId = String(req.query.storeId || '');
@@ -197,13 +177,12 @@ reviewNudgesRouter.post('/send', requireUser, async (req: any, res) => {
     return res.status(404).json(fail('Nudge not found'));
   }
 
-  const clickUrl = `${process.env.APP_BASE_URL}/tracking/nudge/click/${nudge.id}`;
+  const clickUrl = `${process.env.APP_BASE_URL}/submit-review?nudgeId=${nudge.id}`;
   const openUrl = `${process.env.APP_BASE_URL}/tracking/nudge/open/${nudge.id}`;
 
-  const transporter = getTransporter();
+  const mailer = getMailer();
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  await mailer.send({
     to: nudge.customerEmail,
     subject: `How was your experience with ${nudge.product.name}?`,
     html: `
