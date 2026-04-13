@@ -138,6 +138,10 @@ export default function Page() {
               <Link href="/orders" style={ctaSecondary()}>
                 Test Order Flow
               </Link>
+
+              <Link href="/integration" style={ctaSecondary()}>
+                Integration Guide
+              </Link>
             </div>
 
             <div
