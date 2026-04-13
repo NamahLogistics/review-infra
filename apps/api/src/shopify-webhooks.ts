@@ -17,26 +17,35 @@ function verifyShopifyHmac(rawBody: Buffer, hmacHeader: string, secret: string) 
   return crypto.timingSafeEqual(a, b);
 }
 
+function verifyOrReject(req: any, res: any) {
+  const secret = process.env.SHOPIFY_WEBHOOK_SECRET || process.env.SHOPIFY_CLIENT_SECRET || '';
+  const hmacHeader = String(req.headers['x-shopify-hmac-sha256'] || '');
+  const rawBody = req.body as Buffer;
+
+  if (!secret) {
+    res.status(500).send('Missing Shopify webhook secret');
+    return null;
+  }
+
+  if (!Buffer.isBuffer(rawBody)) {
+    res.status(400).send('Invalid raw body');
+    return null;
+  }
+
+  if (!verifyShopifyHmac(rawBody, hmacHeader, secret)) {
+    res.status(401).send('Invalid webhook signature');
+    return null;
+  }
+
+  return rawBody;
+}
+
 shopifyWebhooksRouter.post(
   '/app-uninstalled',
   express.raw({ type: 'application/json' }),
   async (req, res) => {
-    const secret = process.env.SHOPIFY_WEBHOOK_SECRET || '';
-    const hmacHeader = String(req.headers['x-shopify-hmac-sha256'] || '');
-    const rawBody = req.body as Buffer;
-
-    if (!secret) return res.status(500).send('Missing SHOPIFY_WEBHOOK_SECRET');
-
-    if (!verifyShopifyHmac(rawBody, hmacHeader, secret)) {
-      return res.status(401).send('Invalid webhook signature');
-    }
-
-    let payload: any = {};
-    try {
-      payload = JSON.parse(rawBody.toString('utf8'));
-    } catch {
-      return res.status(400).send('Invalid JSON');
-    }
+    const rawBody = verifyOrReject(req, res);
+    if (!rawBody) return;
 
     const shopDomain = String(req.headers['x-shopify-shop-domain'] || '').toLowerCase();
 
@@ -58,6 +67,36 @@ shopifyWebhooksRouter.post(
       },
     });
 
+    return res.status(200).json({ success: true });
+  }
+);
+
+shopifyWebhooksRouter.post(
+  '/customers-data-request',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const rawBody = verifyOrReject(req, res);
+    if (!rawBody) return;
+    return res.status(200).json({ success: true });
+  }
+);
+
+shopifyWebhooksRouter.post(
+  '/customers-redact',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const rawBody = verifyOrReject(req, res);
+    if (!rawBody) return;
+    return res.status(200).json({ success: true });
+  }
+);
+
+shopifyWebhooksRouter.post(
+  '/shop-redact',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const rawBody = verifyOrReject(req, res);
+    if (!rawBody) return;
     return res.status(200).json({ success: true });
   }
 );

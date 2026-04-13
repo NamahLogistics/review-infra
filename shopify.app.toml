@@ -10,6 +10,18 @@ api_version = "2026-04"
 topics = ["app/uninstalled"]
 uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/app-uninstalled"
 
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request"]
+uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/customers-data-request"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/redact"]
+uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/customers-redact"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["shop/redact"]
+uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/shop-redact"
+
 [access_scopes]
 scopes = "read_products,write_script_tags"
 optional_scopes = []
