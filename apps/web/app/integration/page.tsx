@@ -93,12 +93,16 @@ export default function IntegrationPage() {
           <div style={{ marginTop: 12, ...noteStyle() }}>
             The widget script is store-linked. No manual API key is needed for storefront display.
           </div>
+
+          <div style={{ marginTop: 12, ...noteStyle() }}>
+            The widget displays approved reviews and also provides a built-in review submission form on the storefront.
+          </div>
         </div>
 
         <div style={cardStyle()}>
-          <h2 style={h2Style()}>2. Orders API — this starts review automation</h2>
+          <h2 style={h2Style()}>2. Orders API — this starts automated review collection</h2>
           <div style={pStyle()}>
-            The widget only shows reviews. The <b>Orders API</b> is what starts review email automation.
+            The widget handles <b>review display</b> and <b>manual review submission</b>. The <b>Orders API</b> is what starts automated post-purchase review collection by queuing review requests after a real order is created.
           </div>
 
           <pre style={codeStyle()}>
@@ -118,13 +122,17 @@ Content-Type: application/json
           <div style={{ marginTop: 12, ...noteStyle() }}>
             Call this from the client’s backend right after a real order is created.
           </div>
+
+          <div style={{ marginTop: 12, ...noteStyle() }}>
+            If you do not call the Orders API, review requests will not be sent automatically.
+          </div>
         </div>
 
         <div style={cardStyle()}>
           <h2 style={h2Style()}>3. What is productId?</h2>
           <div style={{ display: 'grid', gap: 10 }}>
             <div style={stepStyle()}>
-              <b>Shopify:</b> use the synced product from Review Infra, usually mapped from Shopify product ID / legacy resource ID.
+              <b>Shopify:</b> the widget can auto-detect productId on product pages, and synced products are usually mapped from Shopify product ID or legacy resource ID.
             </div>
             <div style={stepStyle()}>
               <b>Custom store:</b> use the product you created in Review Infra. This can be the internal product ID or mapped external ID based on your flow.
@@ -138,7 +146,7 @@ Content-Type: application/json
         <div style={cardStyle()}>
           <h2 style={h2Style()}>4. Manual review submission</h2>
           <div style={pStyle()}>
-            This is optional. Most integrations should rely on the order → nudge → review flow.
+            This is optional. Most integrations should rely on the order → nudge → review flow. The widget already includes a built-in review submission form for storefront use.
           </div>
 
           <pre style={codeStyle()}>
@@ -165,6 +173,7 @@ Content-Type: application/json
               'Correct store type selected (Shopify or Custom)',
               'Products available in Review Infra',
               'Widget visible on product page',
+              'Review form visible on product page',
               'Orders API called after checkout',
               'Review nudge appears in Nudges page',
               'Review can be submitted and seen in Moderation',
@@ -179,7 +188,7 @@ Content-Type: application/json
         <div style={cardStyle()}>
           <h2 style={h2Style()}>One-line explanation for developers</h2>
           <div style={{ ...noteStyle(), fontSize: 15 }}>
-            <b>Widget script shows reviews.</b> <b>Orders API starts review automation.</b>
+            <b>Widget displays and collects reviews on the storefront.</b> <b>Orders API starts automated post-purchase review collection.</b>
           </div>
         </div>
       </div>
