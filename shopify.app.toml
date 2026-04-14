@@ -11,6 +11,10 @@ topics = ["app/uninstalled"]
 uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/app-uninstalled"
 
 [[webhooks.subscriptions]]
+topics = ["orders/create"]
+uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/orders-create"
+
+[[webhooks.subscriptions]]
 compliance_topics = ["customers/data_request"]
 uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/customers-data-request"
 
@@ -23,7 +27,7 @@ compliance_topics = ["shop/redact"]
 uri = "https://review-infra-api-production.up.railway.app/shopify-webhooks/shop-redact"
 
 [access_scopes]
-scopes = "read_products,write_script_tags"
+scopes = "read_products,write_script_tags,read_orders,read_customers"
 optional_scopes = []
 use_legacy_install_flow = false
 
