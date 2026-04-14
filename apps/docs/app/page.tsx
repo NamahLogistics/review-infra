@@ -15,20 +15,20 @@ export default function DocsHomePage() {
     Review Infra Docs
   </div>
 
-  <a
-    href="/dashboard"
-    style={{
-      padding: '10px 14px',
-      borderRadius: 10,
-      border: '1px solid #111827',
-      background: '#111827',
-      color: '#fff',
-      textDecoration: 'none',
-      fontWeight: 700,
-    }}
-  >
-    Get API Key →
-  </a>
+<a
+  href="https://reviewinfra.dev/dashboard"
+  style={{
+    padding: '10px 14px',
+    borderRadius: 10,
+    border: '1px solid #111827',
+    background: '#111827',
+    color: '#fff',
+    textDecoration: 'none',
+    fontWeight: 700,
+  }}
+>
+  Get API Key →
+</a>
 </div>
       <div
         style={{
